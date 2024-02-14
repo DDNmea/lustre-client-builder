@@ -37,16 +37,17 @@ install: ## Prepare the container backend by installing the image
 	${BACKEND} load < rhel8.tar.gz
 
 fetch-rpms:
+	mkdir -p RPMS
 	cd RPMS && yumdownloader kernel-core kernel-devel
 
 build: ${KERNEL_HEADERS} fetch-rpms ## Build the client RPMs
-	${BACKEND} run -it --rm                         \
-		--security-opt label=disable                \
-		-v ${PWD}/RPMS:/RPMS \
-		-v ${__LUSTRE_SOURCES_ABP}:${__LUSTRE_SOURCES_ABP}  \
-		-v ${KERNEL_HEADERS}:/host/kernel           \
-		client-builder:rhel8                        \
-		bash -c "rpm -i --force /RPMS/* \
-			&& cd ${__LUSTRE_SOURCES_ABP}                 \
+	${BACKEND} run -it --rm                                                    \
+		--security-opt label=disable                                           \
+		-v ${PWD}/RPMS:/host/rpms                                              \
+		-v ${__LUSTRE_SOURCES_ABP}:/host/lustre                                \
+		-v ${KERNEL_HEADERS}:/host/kernel                                      \
+		client-builder:rhel8                                                   \
+		bash -c "rpm -i --force /host/rpms/*                                   \
+			&& cd /host/lustre                                                 \
 			&& ./configure --disable-tests --disable-server --with-linux=/host/kernel \
 			&& make -j rpms"
